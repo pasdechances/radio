@@ -3,6 +3,9 @@ const ffmpeg = require('fluent-ffmpeg');
 const path = require('path');
 const fs = require('fs');
 
+// Si FFmpeg n'est pas dans le PATH, spécifiez le chemin directement
+//ffmpeg.setFfmpegPath('C:\\Path\\To\\ffmpeg\\bin\\ffmpeg.exe');
+
 const app = express();
 const port = 3000;
 const audioDir = path.join(__dirname, 'audio');

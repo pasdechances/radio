@@ -1,3 +1,6 @@
+/.vscode
+/audio
+
 # Logs
 logs
 *.log
