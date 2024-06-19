@@ -3,9 +3,6 @@ const ffmpeg = require('fluent-ffmpeg');
 const path = require('path');
 const fs = require('fs');
 
-// Si FFmpeg n'est pas dans le PATH, spécifiez le chemin directement
-//ffmpeg.setFfmpegPath('C:\\Path\\To\\ffmpeg\\bin\\ffmpeg.exe');
-
 const app = express();
 const port = 3000;
 const audioDir = path.join(__dirname, 'audio');
@@ -26,7 +23,7 @@ app.get('/radio', (req, res) => {
       .format('mp3')
       .on('end', () => {
         // Delay before playing the next file
-        setTimeout(streamFile, 1000); // Adjust the delay as needed
+        setTimeout(streamFile, 100); // Adjust the delay as needed
       })
       .on('error', err => {
         console.error(`Error streaming file: ${err.message}`);
