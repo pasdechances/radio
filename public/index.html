@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Web Radio with RxJS</title>
+</head>
+<body>
+  <audio id="audioPlayer" controls></audio>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://unpkg.com/rxjs/bundles/rxjs.umd.min.js"></script>
+  <script>
+    const { fromEvent, merge } = rxjs;
+    const { map, switchMap } = rxjs.operators;
+
+    const socket = io();
+    const audioPlayer = document.getElementById('audioPlayer');
+    const mediaSource = new MediaSource();
+
+    audioPlayer.src = URL.createObjectURL(mediaSource);
+
+    const audioObservable = new rxjs.Observable(observer => {
+      mediaSource.addEventListener('sourceopen', () => {
+        const sourceBuffer = mediaSource.addSourceBuffer('audio/mpeg');
+
+        socket.on('audio', chunk => {
+          if (sourceBuffer.updating || sourceBuffer.buffered.length === 0) {
+            sourceBuffer.appendBuffer(new Uint8Array(chunk));
+          }
+        });
+
+        sourceBuffer.addEventListener('updateend', () => {
+          observer.next();
+        });
+
+        socket.on('connect', () => {
+          console.log('Connected to server');
+        });
+
+        socket.on('disconnect', () => {
+          console.log('Disconnected from server');
+        });
+      });
+    });
+
+    audioObservable.subscribe();
+
+  </script>
+</body>
+</html>
