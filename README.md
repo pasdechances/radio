@@ -1,5 +1,6 @@
 # RadioProject
 Il s'agit d'une version low syncr d'une radio.
+
 Fonctions serveur actuelles : 
  - Split d'un fichier audio en segment d'une seconde.
  - Broadcast des segment audio toutes seconde.
