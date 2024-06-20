@@ -14,47 +14,54 @@ const audioDir = path.join(__dirname, 'audio');
 let currentIndex = 0;
 let audioFiles = fs.readdirSync(audioDir).filter(file => file.endsWith('.mp3') || file.endsWith('.mp4'));
 
-let clients = [];
-
 const streamFile = () => {
+  console.log("nbfiles", audioFiles.length)
+  console.log("cureentI", currentIndex)
   if (currentIndex >= audioFiles.length) {
-    currentIndex = 0; // Restart playlist
+    currentIndex = 0;
   }
   const filePath = path.join(audioDir, audioFiles[currentIndex]);
   currentIndex++;
 
   const command = ffmpeg(filePath)
     .audioCodec('libmp3lame')
-    .format('mp3');
+    .format('mp3')
+    .on('end', () => {
+      setTimeout(streamFile, 100);
+    })
+    .on('error', err => {
+      console.error(`Error streaming file: ${err.message}`);
+      streamFile();
+    });
 
-  command.on('end', () => {
-    // Delay before playing the next file
-    setTimeout(streamFile, 100); // Adjust the delay as needed
+  const ffmpegStream = command.pipe();
+  
+  ffmpegStream.on('data', chunk => {
+    //console.log('on air');
+    io.emit('audio', chunk);
   });
 
-  command.on('error', err => {
-    console.error(`Error streaming file: ${err.message}`);
-    // Skip the problematic file
+  ffmpegStream.on('end', () => {
+    console.log('Stream ended');
     streamFile();
   });
 
-  command.on('data', chunk => {
-    // Broadcast audio chunk to all connected clients
-    clients.forEach(client => {
-      client.emit('audio', chunk);
-    });
+  ffmpegStream.on('error', err => {
+    console.error(`Stream error: ${err.message}`);
+    streamFile();
   });
-
-  command.pipe();
 };
 
 io.on('connection', (socket) => {
-  console.log('New client connected');
-  clients.push(socket);
+  console.log('New client connected to lobby');
+
+  socket.on('userMessage', (msg) => {
+    console.log(msg);
+    io.emit('serverMessage', msg);
+  });
 
   socket.on('disconnect', () => {
     console.log('Client disconnected');
-    clients = clients.filter(client => client !== socket);
   });
 });
 
