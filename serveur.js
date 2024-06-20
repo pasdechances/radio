@@ -22,30 +22,30 @@ const streamFile = () => {
   }
   const filePath = path.join(audioDir, audioFiles[currentIndex]);
   currentIndex++;
-
+  
   const command = ffmpeg(filePath)
-    .audioCodec('libmp3lame')
-    .format('mp3')
-    .on('end', () => {
-      setTimeout(streamFile, 100);
-    })
-    .on('error', err => {
-      console.error(`Error streaming file: ${err.message}`);
-      streamFile();
-    });
-
+  .audioCodec('libmp3lame')
+  .format('mp3')
+  .on('end', () => {
+    setTimeout(streamFile, 100);
+  })
+  .on('error', err => {
+    console.error(`Error streaming file: ${err.message}`);
+    streamFile();
+  });
+  
   const ffmpegStream = command.pipe();
   
   ffmpegStream.on('data', chunk => {
     //console.log('on air');
     io.emit('audio', chunk);
   });
-
+  
   ffmpegStream.on('end', () => {
     console.log('Stream ended');
     streamFile();
   });
-
+  
   ffmpegStream.on('error', err => {
     console.error(`Stream error: ${err.message}`);
     streamFile();
@@ -54,12 +54,12 @@ const streamFile = () => {
 
 io.on('connection', (socket) => {
   console.log('New client connected to lobby');
-
+  
   socket.on('userMessage', (msg) => {
     console.log(msg);
     io.emit('serverMessage', msg);
   });
-
+  
   socket.on('disconnect', () => {
     console.log('Client disconnected');
   });
