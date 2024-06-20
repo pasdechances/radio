@@ -1,7 +1,8 @@
 # RadioProject
 Il s'agit d'une version low syncr d'une radio.
 
-Fonctions serveur actuelles : 
+## Fonctions serveur actuelles : 
+
  - Split d'un fichier audio en segment d'une seconde.
  - Broadcast des segment audio toutes seconde.
  - Exposition d'une interface graphique low.
@@ -16,6 +17,7 @@ Fonctions serveur actuelles :
 - changer de titre aléa
 - revenir sur le titre précédent
 
-## installer 
+## installation
 
+ prérequis : 
 npm et https://ffmpeg.org/download.html
