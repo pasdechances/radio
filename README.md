@@ -9,6 +9,7 @@ Il s'agit d'une version low syncr d'une radio.
 
 ## Améliorations possibles
 
+- il faudrait que les clients purges le lecteur de temps à autre
 - améliorer la syncro du lecteur
 - réaliser des "room" avec différentes pistes audio
 - mise a dispo de comande syncronisé : play/stop
