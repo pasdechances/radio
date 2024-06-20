@@ -32,6 +32,7 @@
                 console.log("end update buffer")
                 if (sourceBuffer.buffered.length > 1) {
                     const bufferedEnd = sourceBuffer.buffered.end(sourceBuffer.buffered.length - 2);
+                    console.log("bufferend",bufferedEnd)
                     if(bufferedEnd > 10) sourceBuffer.remove(0, bufferedEnd);
                 }
             });
@@ -41,14 +42,14 @@
             });
             
             socket.on('audio', chunk => {
-                if(!play) return;
+                if(!play){
+                    audioQueue = []
+                    return;
+                } 
 
                 console.log("audioplayed")
-
                 const uint8Chunk = new Uint8Array(chunk);
-
                 audioQueue.push(uint8Chunk);
-
                 if (audioQueue.length > 0) {
                     if (!sourceBuffer.updating && mediaSource.readyState === 'open') {
                         console.log("add buff")
