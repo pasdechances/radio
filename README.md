@@ -9,6 +9,11 @@ Fonctions serveur actuelles :
 
 - améliorer la syncro du lecteur
 - réaliser des "room" avec différentes pistes audio
+- mise a dispo de comande syncronisé : play/stop
+- mise a dispo d'une chonologie
+- interagir avec cette chronologie pour réécouter un passage en syncr.
+- changer de titre aléa
+- revenir sur le titre précédent
 
 ## installer 
 
