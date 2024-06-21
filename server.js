@@ -74,6 +74,8 @@ io.on('connection', (socket) => {
   });
 });
 
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.get('/radio', (req, res) => {
   res.send('Web radio is running, connect via WebSocket to receive the audio stream.');
 });
