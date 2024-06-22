@@ -5,7 +5,24 @@
     <title>Web Radio with RxJS</title>
 </head>
 <body>
-    <audio id="audioPlayer" controls></audio>
+    <!-- <audio id="audioPlayer" controls></audio> -->
+    <div>
+        <div>
+            <div id="song-name"></div>
+            <button id="play">play</button>
+            <button id="stop">stop</button>
+            <button id="shuffle">Shuffle</button>
+        </div>
+        <div>
+            <input type="range" id="volume-range" name="volume" min="0" max="10" />
+            <label for="volume">Volume </label><label id="volume">5</label><span> </span><button id="volume-Mute">Mute</button>
+        </div>
+        <div>
+            <input type="range" id="time-range" name="volume" min="0" max="100" value="0"/>
+            <label id="time">0</label><label>s</label>
+        </div>
+    </div>
+
 
     <button id="room1">room1</button>
     <button id="room2">room2</button>
@@ -16,9 +33,13 @@
     <button id="toggleButton">ebgin</button>
     <button id="sendButton">Send msg</button>
     <div id="chat"></div>
+
+    
+      
     
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://unpkg.com/rxjs@6.6.7/bundles/rxjs.umd.min.js"></script>
     <script src="script.js"></script>
+    <script src="player.js"></script>
 </body>
 </html>
