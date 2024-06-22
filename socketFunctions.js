@@ -11,10 +11,9 @@ const switchRoom = (socket, room, io) => {
   roomClients[room]++;
 
   if (roomClients[room] === 1) {
-    streamFile(io, room); // Stream only to the room
+    streamFile(io, room);
   }
-
-  console.log(`Client joined ${room}`);
+  console.log(`${roomClients[room]} Client in room: ${room}`);
 };
 
 const leaveAllRooms = (socket) => {
@@ -25,13 +24,13 @@ const leaveAllRooms = (socket) => {
     roomClients[room]--;
 
     if (roomClients[room] <= 0) {
-      delete roomClients[room];
-      stopStreaming(room); // Stop streaming for the room
+      stopStreaming(room);
       console.log(`No more clients in ${room}. Streaming stopped.`);
     }
+    else{
+      console.log(`${roomClients[room]} Client remaning in room: ${room}`);
+    }
   });
-
-  console.log(`Client left all rooms: ${rooms}`);
 };
 
 module.exports = { leaveAllRooms, switchRoom, roomClients };

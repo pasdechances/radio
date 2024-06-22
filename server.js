@@ -35,13 +35,13 @@ io.on('connection', (socket) => {
   });
 
   socket.on('GotoLobby', () => {
-    leaveAllRooms(socket); // Leave all rooms
+    leaveAllRooms(socket);
     console.log('Client returned to the lobby');
   });
 
   socket.on('disconnect', () => {
     console.log('Client disconnected');
-    leaveAllRooms(socket); // Ensure all rooms are left and streaming stopped
+    leaveAllRooms(socket);
   });
 });
 

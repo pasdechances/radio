@@ -55,12 +55,11 @@ mediaSource.addEventListener('sourceopen', () => {
 
 room1.addEventListener('click', () => {
     socket.emit('GotoRoom1');
-    console.log('GotoRoom1');
     chat.innerHTML = "";
 });
 
 room2.addEventListener('click', () => {
-    socket.emit('GotoRoom3');
+    socket.emit('GotoRoom2');
     chat.innerHTML = "";
 });
 

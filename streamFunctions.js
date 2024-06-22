@@ -31,17 +31,17 @@ const streamFile = async (io, room) => {
     ])
     .output(segmentPattern)
     .on('end', () => {
-      sendSegments(tempDir, io, room); // Pass the room reference
+      sendSegments(tempDir, io, room);
     })
     .on('error', err => {
       console.error(`Error segmenting file: ${err.message}`);
-      fs.rmSync(tempDir, { recursive: true, force: true }); // Cleanup temp directory in case of error
-      streamFile(io, room); // Pass the room reference
+      fs.rmSync(tempDir, { recursive: true, force: true });
+      streamFile(io, room);
     })
     .run();
 };
 
-const sendSegments = (tempDir, io, room) => { // Add room parameter
+const sendSegments = (tempDir, io, room) => {
   const segments = fs.readdirSync(tempDir).filter(file => file.endsWith('.mp3'));
   let index = 0;
   let preloading = false;
@@ -57,13 +57,13 @@ const sendSegments = (tempDir, io, room) => { // Add room parameter
     if (index < segments.length) {
       const segmentPath = path.join(tempDir, segments[index]);
       const segment = fs.readFileSync(segmentPath);
-      io.to(room).emit('audio', segment); // Emit to the specific room
+      io.to(room).emit('audio', segment);
       index++;
     } else {
       clearInterval(segmentIntervals[room]);
       fs.rmSync(tempDir, { recursive: true, force: true });
-      delete segmentIntervals[room]; // Remove reference to the interval
-      streamFile(io, room); // Pass the room reference
+      delete segmentIntervals[room];
+      streamFile(io, room);
     }
   };
 
