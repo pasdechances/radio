@@ -2,38 +2,58 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const ffmpeg = require('fluent-ffmpeg');
-const socketIo = require('socket.io');
+const axios = require('axios');
+const { error } = require('console');
 
 const audioDir = path.join(__dirname, 'audio');
 let currentIndex = 0;
 let audioFiles = fs.readdirSync(audioDir).filter(file => file.endsWith('.mp3') || file.endsWith('.mp4'));
+let errorCount = 0;
 
-const streamFile = (io) => {
-  if (currentIndex >= audioFiles.length) {
-    currentIndex = 0;
-  }
-  const filePath = path.join(audioDir, audioFiles[currentIndex]);
-  currentIndex++;
+const streamFile = async (io) => {
+  try {
+    const response = await axios.get('http://localhost:3001/random-music', { responseType: 'stream' });
+    const musicFilePath = path.join(os.tmpdir(), response.headers['x-music-name']);
+    console.log(response.headers['x-music-name'])
+    const writer = fs.createWriteStream(musicFilePath);
 
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'audio-segments-'));
-  const segmentPattern = path.join(tempDir, 'segment-%03d.mp3');
+    response.data.pipe(writer);
 
-  ffmpeg(filePath)
-    .audioCodec('libmp3lame')
-    .outputOptions([
-      '-f segment',
-      '-segment_time 1',
-      '-reset_timestamps 1'
-    ])
-    .output(segmentPattern)
-    .on('end', () => {
-      sendSegments(tempDir, io);
-    })
-    .on('error', err => {
-      console.error(`Error segmenting file: ${err.message}`);
+    writer.on('finish', () => {
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'audio-segments-'));
+      const segmentPattern = path.join(tempDir, 'segment-%03d.mp3');
+
+      ffmpeg(musicFilePath)
+        .audioCodec('libmp3lame')
+        .outputOptions([
+          '-f segment',
+          '-segment_time 1',
+          '-reset_timestamps 1'
+        ])
+        .output(segmentPattern)
+        .on('end', () => {
+          sendSegments(tempDir, io);
+        })
+        .on('error', err => {
+          console.error(`Error segmenting file: ${err.message}`);
+          streamFile(io);
+        })
+        .run();
+    });
+
+    writer.on('error', err => {
+      console.error(`Error writing file: ${err.message}`);
+    });
+  } catch (err) {
+    console.error(`Error fetching music file: ${err.message}`);
+    errorCount++
+    if(errorCount < 100){
       streamFile(io);
-    })
-    .run();
+    }
+    else{
+      console.log(`server stoped`);
+    }
+  }
 };
 
 const sendSegments = (tempDir, io) => {
