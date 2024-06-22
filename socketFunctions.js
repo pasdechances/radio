@@ -11,13 +11,13 @@ const switchRoom = (socket, room, io) => {
   roomClients[room]++;
 
   if (roomClients[room] === 1) {
-    streamFile(io.to(room)); // Stream only to the room
+    streamFile(io.to(room));
   }
 
   console.log(`Client joined ${room}`);
 };
 
-const leaveAllRooms = (socket, io) => {
+const leaveAllRooms = (socket) => {
   const rooms = Object.keys(socket.rooms).filter(r => r !== socket.id);
 
   rooms.forEach(room => {

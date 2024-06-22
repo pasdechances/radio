@@ -12,7 +12,7 @@ let nextMusicFile = null;
 let nextMusicFileName = null;
 let urlAPI = 'http://localhost:3001';
 
-const streamFile = async (io) => {
+const streamFile = async (room) => {
   if (!nextMusicFile) {
     await loadNextMusic();
   }
@@ -30,16 +30,17 @@ const streamFile = async (io) => {
     ])
     .output(segmentPattern)
     .on('end', () => {
-      sendSegments(tempDir, io);
+      sendSegments(tempDir, room); 
     })
     .on('error', err => {
       console.error(`Error segmenting file: ${err.message}`);
-      streamFile(io);
+      fs.rmSync(tempDir, { recursive: true, force: true }); 
+      streamFile(room); 
     })
     .run();
 };
 
-const sendSegments = (tempDir, io) => {
+const sendSegments = (tempDir, room) => { 
   const segments = fs.readdirSync(tempDir).filter(file => file.endsWith('.mp3'));
   let index = 0;
   let segmentInterval;
@@ -56,12 +57,12 @@ const sendSegments = (tempDir, io) => {
     if (index < segments.length) {
       const segmentPath = path.join(tempDir, segments[index]);
       const segment = fs.readFileSync(segmentPath);
-      io.emit('audio', segment);
+      room.emit('audio', segment);
       index++;
     } else {
       clearInterval(segmentInterval);
       fs.rmSync(tempDir, { recursive: true, force: true });
-      streamFile(io);
+      streamFile(room);
     }
   };
 

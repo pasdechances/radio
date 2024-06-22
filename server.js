@@ -37,12 +37,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('GotoLobby', () => {
-    leaveAllRooms(socket, io);
+    leaveAllRooms(socket);
   });
 
   socket.on('disconnect', () => {
     console.log('Client disconnected');
-    leaveAllRooms(socket, io);
+    leaveAllRooms(socket);
   });
 });
 
