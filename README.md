@@ -20,7 +20,7 @@ Il s'agit d'une version low syncr d'une radio.
 - changer le composant audio pour du WAA(Web Audio API).
 
 ### back
-- réaliser des "room" avec différentes pistes audio.
+- réaliser des "room".
 - brodcaster les commandes play/stop.
 - brodcaster la chronologie client et la syncr.
 - revenir sur le titre précédent.
