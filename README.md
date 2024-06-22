@@ -6,6 +6,8 @@ Il s'agit d'une version low syncr d'une radio.
  - Split d'un fichier audio en segment d'une seconde.
  - Broadcast des segment audio toutes seconde.
  - Exposition d'une interface graphique low.
+ - Utilise une source externe via API pour récupérer un fichier audio.
+ - préload le fichier X temps avant la fin du fichier courrant.
 
 ## Améliorations possibles
 
