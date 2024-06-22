@@ -40,8 +40,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected');
     leaveAllRooms(socket);
+    console.log('Client disconnected');
   });
 });
 
