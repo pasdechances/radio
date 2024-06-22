@@ -5,12 +5,12 @@ const ffmpeg = require('fluent-ffmpeg');
 const axios = require('axios');
 
 const audioDir = path.join(__dirname, 'audio');
-const TimeBeforeEndOfCurrentFile = 60
+const TimeBeforeEndOfCurrentFile = 60;
 let currentIndex = 0;
 let audioFiles = fs.readdirSync(audioDir).filter(file => file.endsWith('.mp3') || file.endsWith('.mp4'));
 let nextMusicFile = null;
 let nextMusicFileName = null;
-let ulrAPI = 'http://localhost:3001'
+let urlAPI = 'http://localhost:3001';
 
 const streamFile = async (io) => {
   if (!nextMusicFile) {
@@ -46,10 +46,9 @@ const sendSegments = (tempDir, io) => {
   let preloading = false;
 
   const preloadAndStream = () => {
-    if (!preloading && index === segments.length - TimeBeforeEndOfCurrentFile) { // Preload the next music one minute before the end
+    if (!preloading && index === segments.length - TimeBeforeEndOfCurrentFile) {
       preloading = true;
-      loadNextMusic().then(() => {
-      }).catch(err => {
+      loadNextMusic().catch(err => {
         console.error(`Error preloading next music file: ${err.message}`);
       });
     }
@@ -66,14 +65,13 @@ const sendSegments = (tempDir, io) => {
     }
   };
 
-  segmentInterval = setInterval(preloadAndStream, 1000); // Send each segment every second
+  segmentInterval = setInterval(preloadAndStream, 1000);
 };
 
 const loadNextMusic = async () => {
   try {
-    const response = await axios.get(ulrAPI + "/random-music", { responseType: 'stream' });
+    const response = await axios.get(`${urlAPI}/random-music`, { responseType: 'stream' });
     const musicFilePath = path.join(os.tmpdir(), response.headers['x-music-name']);
-    console.log(response.headers['x-music-name'])
     const writer = fs.createWriteStream(musicFilePath);
 
     response.data.pipe(writer);
