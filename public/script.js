@@ -3,6 +3,10 @@ const audioPlayer = document.getElementById('audioPlayer');
 const sendButton = document.getElementById('sendButton');
 const text = document.getElementById('text');
 const chat = document.getElementById('chat');
+const room1 = document.getElementById('room1');
+const room2 = document.getElementById('room2');
+const room3 = document.getElementById('room3');
+const lobby = document.getElementById('lobby');
 const mediaSource = new MediaSource();
 let play = false
 
@@ -39,17 +43,7 @@ mediaSource.addEventListener('sourceopen', () => {
             }
         }                
     });
-    
-    socket.on('serverMessage', msg => {
-        const item = document.createElement('li');
-        item.textContent = msg;
-        chat.appendChild(item);
-    });
-    
-    sendButton.addEventListener('click', () => {
-        socket.emit('userMessage', text.value);
-        text.value = '';
-    });
+
     toggleButton.addEventListener('click', () => {
         if(play)
             play = false
@@ -57,6 +51,39 @@ mediaSource.addEventListener('sourceopen', () => {
             play = true
     });
 });
+
+
+room1.addEventListener('click', () => {
+    socket.emit('GotoRoom1');
+    chat.innerHTML = "";
+});
+
+room2.addEventListener('click', () => {
+    socket.emit('GotoRoom2');
+    chat.innerHTML = "";
+});
+
+room3.addEventListener('click', () => {
+    socket.emit('GotoRoom3');
+    chat.innerHTML = "";
+});
+
+lobby.addEventListener('click', () => {
+    socket.emit('GotoLobby');
+    chat.innerHTML = "";
+});
+
+socket.on('serverMessage', msg => {
+    const item = document.createElement('li');
+    item.textContent = msg;
+    chat.appendChild(item);
+});
+
+sendButton.addEventListener('click', () => {
+    socket.emit('userMessage', text.value);
+    text.value = '';
+});
+
 
 mediaSource.addEventListener('sourceended', () => {
     console.log('MediaSource ended');

@@ -11,8 +11,9 @@ let audioFiles = fs.readdirSync(audioDir).filter(file => file.endsWith('.mp3') |
 let nextMusicFile = null;
 let nextMusicFileName = null;
 let urlAPI = 'http://localhost:3001';
+let segmentIntervals = {};
 
-const streamFile = async (io) => {
+const streamFile = async (io, room) => {
   if (!nextMusicFile) {
     await loadNextMusic();
   }
@@ -30,19 +31,19 @@ const streamFile = async (io) => {
     ])
     .output(segmentPattern)
     .on('end', () => {
-      sendSegments(tempDir, io);
+      sendSegments(tempDir, io, room);
     })
     .on('error', err => {
       console.error(`Error segmenting file: ${err.message}`);
-      streamFile(io);
+      fs.rmSync(tempDir, { recursive: true, force: true });
+      streamFile(io, room);
     })
     .run();
 };
 
-const sendSegments = (tempDir, io) => {
+const sendSegments = (tempDir, io, room) => {
   const segments = fs.readdirSync(tempDir).filter(file => file.endsWith('.mp3'));
   let index = 0;
-  let segmentInterval;
   let preloading = false;
 
   const preloadAndStream = () => {
@@ -56,16 +57,25 @@ const sendSegments = (tempDir, io) => {
     if (index < segments.length) {
       const segmentPath = path.join(tempDir, segments[index]);
       const segment = fs.readFileSync(segmentPath);
-      io.emit('audio', segment);
+      io.to(room).emit('audio', segment);
       index++;
     } else {
-      clearInterval(segmentInterval);
+      clearInterval(segmentIntervals[room]);
       fs.rmSync(tempDir, { recursive: true, force: true });
-      streamFile(io);
+      delete segmentIntervals[room];
+      streamFile(io, room);
     }
   };
 
-  segmentInterval = setInterval(preloadAndStream, 1000);
+  segmentIntervals[room] = setInterval(preloadAndStream, 1000);
+};
+
+const stopStreaming = (room) => {
+  if (segmentIntervals[room]) {
+    clearInterval(segmentIntervals[room]);
+    delete segmentIntervals[room];
+    console.log(`Stopped streaming for room: ${room}`);
+  }
 };
 
 const loadNextMusic = async () => {
@@ -113,4 +123,4 @@ const loadLocalMusic = () => {
   });
 };
 
-module.exports = { streamFile };
+module.exports = { streamFile, stopStreaming };
