@@ -11,8 +11,9 @@ let audioFiles = fs.readdirSync(audioDir).filter(file => file.endsWith('.mp3') |
 let nextMusicFile = null;
 let nextMusicFileName = null;
 let urlAPI = 'http://localhost:3001';
+let segmentIntervals = {};
 
-const streamFile = async (room) => {
+const streamFile = async (io, room) => {
   if (!nextMusicFile) {
     await loadNextMusic();
   }
@@ -30,20 +31,19 @@ const streamFile = async (room) => {
     ])
     .output(segmentPattern)
     .on('end', () => {
-      sendSegments(tempDir, room); 
+      sendSegments(tempDir, io, room); // Pass the room reference
     })
     .on('error', err => {
       console.error(`Error segmenting file: ${err.message}`);
-      fs.rmSync(tempDir, { recursive: true, force: true }); 
-      streamFile(room); 
+      fs.rmSync(tempDir, { recursive: true, force: true }); // Cleanup temp directory in case of error
+      streamFile(io, room); // Pass the room reference
     })
     .run();
 };
 
-const sendSegments = (tempDir, room) => { 
+const sendSegments = (tempDir, io, room) => { // Add room parameter
   const segments = fs.readdirSync(tempDir).filter(file => file.endsWith('.mp3'));
   let index = 0;
-  let segmentInterval;
   let preloading = false;
 
   const preloadAndStream = () => {
@@ -57,16 +57,25 @@ const sendSegments = (tempDir, room) => {
     if (index < segments.length) {
       const segmentPath = path.join(tempDir, segments[index]);
       const segment = fs.readFileSync(segmentPath);
-      room.emit('audio', segment);
+      io.to(room).emit('audio', segment); // Emit to the specific room
       index++;
     } else {
-      clearInterval(segmentInterval);
+      clearInterval(segmentIntervals[room]);
       fs.rmSync(tempDir, { recursive: true, force: true });
-      streamFile(room);
+      delete segmentIntervals[room]; // Remove reference to the interval
+      streamFile(io, room); // Pass the room reference
     }
   };
 
-  segmentInterval = setInterval(preloadAndStream, 1000);
+  segmentIntervals[room] = setInterval(preloadAndStream, 1000);
+};
+
+const stopStreaming = (room) => {
+  if (segmentIntervals[room]) {
+    clearInterval(segmentIntervals[room]);
+    delete segmentIntervals[room];
+    console.log(`Stopped streaming for room: ${room}`);
+  }
 };
 
 const loadNextMusic = async () => {
@@ -114,4 +123,4 @@ const loadLocalMusic = () => {
   });
 };
 
-module.exports = { streamFile };
+module.exports = { streamFile, stopStreaming };

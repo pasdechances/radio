@@ -1,8 +1,8 @@
-const { streamFile } = require('./streamFunctions');
+const { streamFile, stopStreaming } = require('./streamFunctions');
 const roomClients = {};
 
 const switchRoom = (socket, room, io) => {
-  leaveAllRooms(socket);
+  leaveAllRooms(socket, io);
 
   socket.join(room);
   if (!roomClients[room]) {
@@ -11,7 +11,7 @@ const switchRoom = (socket, room, io) => {
   roomClients[room]++;
 
   if (roomClients[room] === 1) {
-    streamFile(io.to(room));
+    streamFile(io, room); // Stream only to the room
   }
 
   console.log(`Client joined ${room}`);
@@ -26,7 +26,7 @@ const leaveAllRooms = (socket) => {
 
     if (roomClients[room] <= 0) {
       delete roomClients[room];
-      // Stop streaming logic here if needed
+      stopStreaming(room); // Stop streaming for the room
       console.log(`No more clients in ${room}. Streaming stopped.`);
     }
   });
