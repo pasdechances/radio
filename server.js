@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const socketIo = require('socket.io');
 const http = require('http');
-const { switchRoom, leaveAllRooms } = require('./roomHandler');
+const { switchRoom, leaveAllRooms } = require('./socketFunctions');
 
 const app = express();
 const server = http.createServer(app);
