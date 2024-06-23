@@ -69,10 +69,13 @@ async function initializeAudioContext() {
     gainNode.gain.value = volumeRange.value / 10;
     gainNode.connect(context.destination);
 
+    await context.audioWorklet.addModule('worklet-queue.js');
     await context.audioWorklet.addModule('worklet-processor.js');
-    audioWorkletNode = new AudioWorkletNode(context, 'audio-processor');
-    audioWorkletNode.connect(gainNode);
-    audioWorkletNode.port.onmessage = (event) => {
+
+    procWorkletNode = new AudioWorkletNode(context, 'audio-processor');
+    queueWorkletNode = new AudioWorkletNode(context, 'audio-queue');
+    procWorkletNode.connect(gainNode);
+    procWorkletNode.port.onmessage = (event) => {
         if (event.data === 'need-more-data') {
             console.log("waiting data");
             sendNextSegment()
@@ -87,15 +90,37 @@ function decodeAndQueueAudio(uint8Chunk) {
         for (let i = 0; i < numberOfChannels; ++i) {
             channelData[i] = buffer.getChannelData(i);
         }
-        audioQueue.push(channelData);
+        
+        const segmentSize = 128;
+        const channelDataLength = channelData.length
+        let maxLength = 0;
+        
+        for (let i = 0; i < channelDataLength; ++i) {
+            const length = channelData[i].length;
+            if (length > maxLength) {
+                maxLength = length;
+            }
+        }
+
+        for (let i = 0; i < maxLength; i += segmentSize) {
+            let segment = [];
+            for (let x = 0; x < channelDataLength; ++x) {
+                let bound =  Math.min(i + segmentSize, maxLength)
+                segment[x] = channelData[x].subarray(i,bound)
+            }
+            audioQueue.push(segment);
+        }
         sendNextSegment()        
     });
 }
 
 function sendNextSegment() {
-    if (audioQueue.length > 0 && audioWorkletNode) {
-        const audioData = audioQueue.shift();
-        audioWorkletNode.port.postMessage(audioData);
+    if (audioQueue.length > 0 && queueWorkletNode) {
+        let audioData = []
+        audioData = audioQueue;
+        for (let i = 0; i < audioData.length; ++i){
+            queueWorkletNode.port.postMessage(audioData.shift());
+        }
     }
 }
 
