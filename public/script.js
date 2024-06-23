@@ -79,8 +79,8 @@ async function initializeAudioContext() {
 
 function decodeAndQueueAudio(uint8Chunk) {
     context.decodeAudioData(uint8Chunk.buffer, buffer => {
+        console.log('Decoded audio data:');
         const channelData = buffer.getChannelData(0);
-        console.log('Decoded audio data:', channelData);
         const segmentSize = 128;  // Taille d'un segment en nombre d'échantillons
 
         // Découper le tampon en segments plus petits
@@ -99,34 +99,34 @@ function decodeAndQueueAudio(uint8Chunk) {
 function sendNextSegment() {
     if (audioQueue.length > 0) {
         const audioData = audioQueue.shift();
-        console.log('Sending segment to worklet:', audioData);
+         console.log('Sending segment to worklet:');
         audioWorkletNode.port.postMessage(audioData);
     }
 }
 
-// function playBuffer() {
-//     if (audioQueue.length > 0) {
-//         const buffer = audioQueue.shift();
-//         const nextSource = context.createBufferSource();
-//         nextSource.buffer = buffer;
-//         nextSource.connect(gainNode);
+function playBuffer() {
+    if (audioQueue.length > 0) {
+        const buffer = audioQueue.shift();
+        const nextSource = context.createBufferSource();
+        nextSource.buffer = buffer;
+        nextSource.connect(gainNode);
 
-//         const currentTime = context.currentTime;
-//         const startTime = Math.max(currentTime, context.currentTime + elapsedTime);
+        const currentTime = context.currentTime;
+        const startTime = Math.max(currentTime, context.currentTime + elapsedTime);
 
-//         nextSource.start(startTime);
-//         elapsedTime = buffer.duration;
+        nextSource.start(startTime);
+        elapsedTime = buffer.duration;
         
-//         nextSource.onended = () => {
-//             playBuffer();
-//         };
+        nextSource.onended = () => {
+            playBuffer();
+        };
 
-//         isPlaying = true;
-//         updateElapsedTime();
-//     } else {
-//         isPlaying = false;
-//     }
-// }
+        isPlaying = true;
+        updateElapsedTime();
+    } else {
+        isPlaying = false;
+    }
+}
 
 function updateElapsedTime() {
     if (isPlaying && !seeking) {
