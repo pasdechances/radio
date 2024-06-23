@@ -81,13 +81,11 @@ function decodeAndQueueAudio(uint8Chunk) {
     context.decodeAudioData(uint8Chunk.buffer, buffer => {
         console.log('Decoded audio data:');
         const channelData = buffer.getChannelData(0);
-        const segmentSize = 128;  // Taille d'un segment en nombre d'échantillons
-
-        // Découper le tampon en segments plus petits
+        const segmentSize = 128;
         for (let i = 0; i < channelData.length; i += segmentSize) {
             const segment = channelData.subarray(i, i + segmentSize);
             audioQueue.push(segment);
-            console.log('Segment queued:', segment);
+            console.log('Segment queued:');
         }
 
         if (audioWorkletNode) {

@@ -11,13 +11,13 @@ class AudioProcessor extends AudioWorkletProcessor {
 
     process(inputs, outputs, parameters) {
         const output = outputs[0];
-        if (this.queue.length > 0) {
-            const buffer = this.queue.shift();
-            for (let channel = 0; channel < output.length; ++channel) {
+        for (let channel = 0; channel < output.length; ++channel) {
+            if (this.queue.length > 0) {
+                const buffer = this.queue.shift();
                 output[channel].set(buffer.subarray(0, output[channel].length), 0);
+            } else {
+                this.port.postMessage('need-more-data');
             }
-        } else {
-            this.port.postMessage('need-more-data');
         }
         return true;
     }
