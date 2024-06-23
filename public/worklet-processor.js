@@ -2,8 +2,9 @@ class AudioProcessor extends AudioWorkletProcessor {
     constructor() {
         super();
         this.queue = [];
-        this.queueLengthMinload = 750
-        this.queueLengthPreload = 950
+        this.queueLengthMinload = 100
+        this.queueLengthPreload = 2050
+        this.preload = true;
         this.port.onmessage = (event) => {
             if (event.data) {
                 const segmentSize = 128;
@@ -26,14 +27,21 @@ class AudioProcessor extends AudioWorkletProcessor {
                     }
                     this.queue.push(segment);
                 }
-                console.log(this.queue.length)
             }
+            console.log('cut ?')
         };
     }
 
     process(inputs, outputs, parameters) {
         const output = outputs[0];
-        if (this.queue.length > this.queueLengthMinload) {
+        let length = this.queue.length
+        if(length < this.queueLengthMinload){
+            this.preload = true;
+        } else if(length > this.queueLengthPreload){
+            this.preload = false;
+        }
+
+        if (!this.preload) {
             let segment = this.queue.shift()
             for (let x = 0; x < output.length; ++x) {
                 if (x < segment.length){
@@ -41,9 +49,7 @@ class AudioProcessor extends AudioWorkletProcessor {
                 }
             }
         }
-        if(this.queue.length < this.queueLengthPreload){
-           // this.port.postMessage('need-more-data');
-        }
+        console.log(length)
         return true;
     }
 }

@@ -56,7 +56,6 @@ socket.on('audio', chunk => {
     if (context === null) {
         initializeAudioContext().then(() => {
             decodeAndQueueAudio(uint8Chunk);
-
         });
     } else {
         decodeAndQueueAudio(uint8Chunk);
