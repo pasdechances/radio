@@ -27,7 +27,7 @@ let muted = false;
 let seeking = false;
 let audioQueue = [];
 let audioBuffer = null;
-
+let oneTime = true
 
 /* 
     The DIY player wanted, reach a step where i need to learn more about buffer/AudioWorkletNode.
@@ -49,12 +49,14 @@ volumeMute.addEventListener('click', () => {
     volumeMute.innerText = muted ? "Mute On" : "Mute Off";
 });
 
+
 socket.on('audio', chunk => {
-    console.log('Received chunk:', chunk);
+    if(!oneTime) return;
     const uint8Chunk = new Uint8Array(chunk);
     if (context === null) {
         initializeAudioContext().then(() => {
             decodeAndQueueAudio(uint8Chunk);
+
         });
     } else {
         decodeAndQueueAudio(uint8Chunk);
@@ -72,59 +74,54 @@ async function initializeAudioContext() {
     audioWorkletNode.connect(gainNode);
     audioWorkletNode.port.onmessage = (event) => {
         if (event.data === 'need-more-data') {
-            sendNextSegment();
+            console.log("waiting data");
+            sendNextSegment()
         }
     };
 }
 
 function decodeAndQueueAudio(uint8Chunk) {
     context.decodeAudioData(uint8Chunk.buffer, buffer => {
-        console.log('Decoded audio data:');
-        const channelData = buffer.getChannelData(0);
-        const segmentSize = 128;
-        for (let i = 0; i < channelData.length; i += segmentSize) {
-            const segment = channelData.subarray(i, i + segmentSize);
-            audioQueue.push(segment);
-            console.log('Segment queued:');
+        const numberOfChannels = buffer.numberOfChannels
+        let channelData = [];
+        for (let i = 0; i < numberOfChannels; ++i) {
+            channelData[i] = buffer.getChannelData(i);
         }
-
-        if (audioWorkletNode) {
-            sendNextSegment();
-        }
+        audioQueue.push(channelData);
+        sendNextSegment()        
     });
 }
 
 function sendNextSegment() {
-    if (audioQueue.length > 0) {
+    if (audioQueue.length > 0 && audioWorkletNode) {
         const audioData = audioQueue.shift();
-         console.log('Sending segment to worklet:');
         audioWorkletNode.port.postMessage(audioData);
     }
 }
 
-function playBuffer() {
-    if (audioQueue.length > 0) {
-        const buffer = audioQueue.shift();
-        const nextSource = context.createBufferSource();
-        nextSource.buffer = buffer;
-        nextSource.connect(gainNode);
+// function playBuffer() {
+//     if (audioQueue.length > 0) {
+//         const buffer = audioQueue.shift();
+//         const nextSource = context.createBufferSource();
+//         nextSource.buffer = buffer;
+//         nextSource.connect(gainNode);
 
-        const currentTime = context.currentTime;
-        const startTime = Math.max(currentTime, context.currentTime + elapsedTime);
+//         const currentTime = context.currentTime;
+//         const startTime = Math.max(currentTime, context.currentTime + elapsedTime);
 
-        nextSource.start(startTime);
-        elapsedTime = buffer.duration;
+//         nextSource.start(startTime);
+//         elapsedTime = buffer.duration;
         
-        nextSource.onended = () => {
-            playBuffer();
-        };
+//         nextSource.onended = () => {
+//             playBuffer();
+//         };
 
-        isPlaying = true;
-        updateElapsedTime();
-    } else {
-        isPlaying = false;
-    }
-}
+//         isPlaying = true;
+//         updateElapsedTime();
+//     } else {
+//         isPlaying = false;
+//     }
+// }
 
 function updateElapsedTime() {
     if (isPlaying && !seeking) {
@@ -139,59 +136,59 @@ function updateElapsedTime() {
 
 
 // Default audio player => change to a DIY audioplayer (up)
-const mediaSource = new MediaSource();
-let play = false
+// const mediaSource = new MediaSource();
+// let play = false
 
-audioPlayer.src = URL.createObjectURL(mediaSource);
+// audioPlayer.src = URL.createObjectURL(mediaSource);
 
-audioPlayer.addEventListener("play", () => {
-    play = !play
-});
+// audioPlayer.addEventListener("play", () => {
+//     play = !play
+// });
 
-mediaSource.addEventListener('sourceopen', () => {
-    const sourceBuffer = mediaSource.addSourceBuffer('audio/mpeg');
-    let audioQueue = [];
+// mediaSource.addEventListener('sourceopen', () => {
+//     const sourceBuffer = mediaSource.addSourceBuffer('audio/mpeg');
+//     let audioQueue = [];
     
-    sourceBuffer.addEventListener('updateend', () => {
-        console.log("end update, buffer lenght", sourceBuffer.buffered.length)
-        if (sourceBuffer.buffered.length > 1) {
-            const bufferedEnd = sourceBuffer.buffered.end(sourceBuffer.buffered.length - 2);
-            console.log("bufferend : ",bufferedEnd)
-            if(bufferedEnd > 10) sourceBuffer.remove(0, bufferedEnd);
-        }
-    });
+//     sourceBuffer.addEventListener('updateend', () => {
+//         console.log("end update, buffer lenght", sourceBuffer.buffered.length)
+//         if (sourceBuffer.buffered.length > 1) {
+//             const bufferedEnd = sourceBuffer.buffered.end(sourceBuffer.buffered.length - 2);
+//             console.log("bufferend : ",bufferedEnd)
+//             if(bufferedEnd > 10) sourceBuffer.remove(0, bufferedEnd);
+//         }
+//     });
     
-    sourceBuffer.addEventListener('error', (e) => {
-        console.error('SourceBuffer error:', e);
-    });
+//     sourceBuffer.addEventListener('error', (e) => {
+//         console.error('SourceBuffer error:', e);
+//     });
     
-    socket.on('audio', chunk => {
-        if(!play){
-            audioQueue = []
-            return;
-        } 
-        const uint8Chunk = new Uint8Array(chunk);
-        audioQueue.push(uint8Chunk);
-        if (audioQueue.length > 0) {
-            if (!sourceBuffer.updating && mediaSource.readyState === 'open') {
-                console.log("add buff")
-                sourceBuffer.appendBuffer(audioQueue.shift());
-            }
-        }                
-    });
+//     socket.on('audio', chunk => {
+//         if(!play){
+//             audioQueue = []
+//             return;
+//         } 
+//         const uint8Chunk = new Uint8Array(chunk);
+//         audioQueue.push(uint8Chunk);
+//         if (audioQueue.length > 0) {
+//             if (!sourceBuffer.updating && mediaSource.readyState === 'open') {
+//                 console.log("add buff")
+//                 sourceBuffer.appendBuffer(audioQueue.shift());
+//             }
+//         }                
+//     });
 
-    toggleButton.addEventListener('click', () => {
-        play = !play
-    });
-});
+//     toggleButton.addEventListener('click', () => {
+//         play = !play
+//     });
+// });
 
-mediaSource.addEventListener('sourceended', () => {
-    console.log('MediaSource ended');
-});
+// mediaSource.addEventListener('sourceended', () => {
+//     console.log('MediaSource ended');
+// });
 
-mediaSource.addEventListener('sourceclose', () => {
-    console.log('MediaSource closed');
-});
+// mediaSource.addEventListener('sourceclose', () => {
+//     console.log('MediaSource closed');
+// });
 
 
 
