@@ -18,6 +18,7 @@ const timeRange = document.getElementById('time-range');
 
 let context = null;
 let audioWorkletNode = null;
+let queueWorkletNode = null;
 let gainNode = null;
 let source = null;
 let startTime = 0;
@@ -74,10 +75,13 @@ async function initializeAudioContext() {
 
     procWorkletNode = new AudioWorkletNode(context, 'audio-processor');
     queueWorkletNode = new AudioWorkletNode(context, 'audio-queue');
+
+    globalThis.queueWorkletNode = queueWorkletNode;
+
     procWorkletNode.connect(gainNode);
+
     procWorkletNode.port.onmessage = (event) => {
         if (event.data === 'need-more-data') {
-            console.log("waiting data");
             sendNextSegment()
         }
     };

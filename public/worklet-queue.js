@@ -1,13 +1,11 @@
 class AudioQueue extends AudioWorkletProcessor {
     constructor() {
         super();
-        this.queue = [];
-        this.queueLengthMinload = 750
-        this.queueLengthPreload = 950
+        globalThis.queue = [];
+        
         this.port.onmessage = (event) => {
             if (event.data) {
-                this.queue.push(event.data);
-                console.log(this.queue.length)
+                globalThis.queue.push(event.data);
             }
         };
     }
@@ -17,4 +15,4 @@ class AudioQueue extends AudioWorkletProcessor {
     }
 }
 
-registerProcessor('audio-queue', AudioProcessor);
+registerProcessor('audio-queue', AudioQueue);
