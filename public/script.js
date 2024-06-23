@@ -17,6 +17,7 @@ const timeText = document.getElementById('time');
 const timeRange = document.getElementById('time-range');
 
 let context = null;
+let audioWorkletNode = null;
 let gainNode = null;
 let source = null;
 let startTime = 0;
@@ -33,49 +34,75 @@ let audioBuffer = null;
     Last error on file worklet-processor.js => Output channel length does not match buffer length.
 */
 
-// volumeRange.addEventListener('input', () => {
-//     if (gainNode) {
-//         gainNode.gain.value = volumeRange.value / 10;
-//     }
-//     volumeText.innerText = volumeRange.value;
-// });
+volumeRange.addEventListener('input', () => {
+    if (gainNode) {
+        gainNode.gain.value = volumeRange.value / 10;
+    }
+    volumeText.innerText = volumeRange.value;
+});
 
-// volumeMute.addEventListener('click', () => {
-//     muted = !muted;
-//     if (gainNode) {
-//         gainNode.gain.value = muted ? 0 : volumeRange.value / 10;
-//     }
-//     volumeMute.innerText = muted ? "Mute On" : "Mute Off";
-// });
+volumeMute.addEventListener('click', () => {
+    muted = !muted;
+    if (gainNode) {
+        gainNode.gain.value = muted ? 0 : volumeRange.value / 10;
+    }
+    volumeMute.innerText = muted ? "Mute On" : "Mute Off";
+});
 
-// socket.on('audio', chunk => {
-//     const uint8Chunk = new Uint8Array(chunk);
-//     if (context === null) {
-//         initializeAudioContext();
-//     }
-//     context.decodeAudioData(uint8Chunk.buffer, buffer => {
-//         if (audioWorkletNode) {
-//             audioWorkletNode.port.postMessage(buffer.getChannelData(0));
-//         }
-//     });
-// });
+socket.on('audio', chunk => {
+    console.log('Received chunk:', chunk);
+    const uint8Chunk = new Uint8Array(chunk);
+    if (context === null) {
+        initializeAudioContext().then(() => {
+            decodeAndQueueAudio(uint8Chunk);
+        });
+    } else {
+        decodeAndQueueAudio(uint8Chunk);
+    }
+});
 
-// async function initializeAudioContext() {
-//     context = new AudioContext();
-//     gainNode = context.createGain();
-//     gainNode.gain.value = volumeRange.value / 10;
-//     gainNode.connect(context.destination);
+async function initializeAudioContext() {
+    context = new AudioContext();
+    gainNode = context.createGain();
+    gainNode.gain.value = volumeRange.value / 10;
+    gainNode.connect(context.destination);
 
-//     await context.audioWorklet.addModule('worklet-processor.js');
-//     audioWorkletNode = new AudioWorkletNode(context, 'audio-processor');
-//     audioWorkletNode.connect(gainNode);
-//     audioWorkletNode.port.onmessage = (event) => {
-//         if (event.data === 'need-more-data' && audioQueue.length > 0) {
-//             const audioData = audioQueue.shift();
-//             audioWorkletNode.port.postMessage(audioData.getChannelData(0));
-//         }
-//     };
-// }
+    await context.audioWorklet.addModule('worklet-processor.js');
+    audioWorkletNode = new AudioWorkletNode(context, 'audio-processor');
+    audioWorkletNode.connect(gainNode);
+    audioWorkletNode.port.onmessage = (event) => {
+        if (event.data === 'need-more-data') {
+            sendNextSegment();
+        }
+    };
+}
+
+function decodeAndQueueAudio(uint8Chunk) {
+    context.decodeAudioData(uint8Chunk.buffer, buffer => {
+        const channelData = buffer.getChannelData(0);
+        console.log('Decoded audio data:', channelData);
+        const segmentSize = 128;  // Taille d'un segment en nombre d'échantillons
+
+        // Découper le tampon en segments plus petits
+        for (let i = 0; i < channelData.length; i += segmentSize) {
+            const segment = channelData.subarray(i, i + segmentSize);
+            audioQueue.push(segment);
+            console.log('Segment queued:', segment);
+        }
+
+        if (audioWorkletNode) {
+            sendNextSegment();
+        }
+    });
+}
+
+function sendNextSegment() {
+    if (audioQueue.length > 0) {
+        const audioData = audioQueue.shift();
+        console.log('Sending segment to worklet:', audioData);
+        audioWorkletNode.port.postMessage(audioData);
+    }
+}
 
 // function playBuffer() {
 //     if (audioQueue.length > 0) {
@@ -101,14 +128,14 @@ let audioBuffer = null;
 //     }
 // }
 
-// function updateElapsedTime() {
-//     if (isPlaying && !seeking) {
-//         elapsedTime = context.currentTime - startTime;
-//         timeText.innerHTML = elapsedTime.toFixed(0);
-//         timeRange.value = elapsedTime;
-//         requestAnimationFrame(updateElapsedTime);
-//     }
-// }
+function updateElapsedTime() {
+    if (isPlaying && !seeking) {
+        elapsedTime = context.currentTime - startTime;
+        timeText.innerHTML = elapsedTime.toFixed(0);
+        timeRange.value = elapsedTime;
+        requestAnimationFrame(updateElapsedTime);
+    }
+}
 
 
 

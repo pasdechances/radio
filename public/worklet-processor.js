@@ -14,14 +14,7 @@ class AudioProcessor extends AudioWorkletProcessor {
         if (this.queue.length > 0) {
             const buffer = this.queue.shift();
             for (let channel = 0; channel < output.length; ++channel) {
-                // Vérifier que le canal de sortie a la même longueur que le buffer
-                if (output[channel].length !== buffer.length) {
-                    console.warn('Output channel length does not match buffer length.');
-                    continue;
-                }
-
-                // Copier les données du buffer dans le canal de sortie
-                output[channel].set(buffer, 0); // Assurez-vous que l'offset est correct
+                output[channel].set(buffer.subarray(0, output[channel].length), 0);
             }
         } else {
             this.port.postMessage('need-more-data');
