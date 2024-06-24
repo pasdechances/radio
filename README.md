@@ -17,7 +17,6 @@ Il s'agit d'une version low syncr d'une radio.
 - améliorer la syncro du lecteur.
 - interagir avec cette chronologie pour réécouter un passage en syncr.
 - revenir sur le titre précédent.
-- changer le composant audio pour du WAA(Web Audio API).
 
 ### back
 - réaliser des "room".
