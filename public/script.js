@@ -34,69 +34,68 @@ let oneTime = true
     Last error on file worklet-processor.js => Output channel length does not match buffer length.
 */
 
-volumeRange.addEventListener('input', () => {
-    if (gainNode) {
-        gainNode.gain.value = volumeRange.value / 10;
-    }
-    volumeText.innerText = volumeRange.value;
-});
+// volumeRange.addEventListener('input', () => {
+//     if (gainNode) {
+//         gainNode.gain.value = volumeRange.value / 10;
+//     }
+//     volumeText.innerText = volumeRange.value;
+// });
 
-volumeMute.addEventListener('click', () => {
-    muted = !muted;
-    if (gainNode) {
-        gainNode.gain.value = muted ? 0 : volumeRange.value / 10;
-    }
-    volumeMute.innerText = muted ? "Mute On" : "Mute Off";
-});
+// volumeMute.addEventListener('click', () => {
+//     muted = !muted;
+//     if (gainNode) {
+//         gainNode.gain.value = muted ? 0 : volumeRange.value / 10;
+//     }
+//     volumeMute.innerText = muted ? "Mute On" : "Mute Off";
+// });
 
+// socket.on('audio', chunk => {
+//     if(!oneTime) return;
+//     const uint8Chunk = new Uint8Array(chunk);
+//     if (context === null) {
+//         initializeAudioContext().then(() => {
+//             decodeAndQueueAudio(uint8Chunk);
+//         });
+//     } else {
+//         decodeAndQueueAudio(uint8Chunk);
+//     }
+// });
 
-socket.on('audio', chunk => {
-    if(!oneTime) return;
-    const uint8Chunk = new Uint8Array(chunk);
-    if (context === null) {
-        initializeAudioContext().then(() => {
-            decodeAndQueueAudio(uint8Chunk);
-        });
-    } else {
-        decodeAndQueueAudio(uint8Chunk);
-    }
-});
+// async function initializeAudioContext() {
+//     context = new AudioContext();
+//     gainNode = context.createGain();
+//     gainNode.gain.value = volumeRange.value / 10;
+//     gainNode.connect(context.destination);
 
-async function initializeAudioContext() {
-    context = new AudioContext();
-    gainNode = context.createGain();
-    gainNode.gain.value = volumeRange.value / 10;
-    gainNode.connect(context.destination);
+//     await context.audioWorklet.addModule('worklet-processor.js');
+//     audioWorkletNode = new AudioWorkletNode(context, 'audio-processor');
+//     audioWorkletNode.connect(gainNode);
+//     audioWorkletNode.port.onmessage = (event) => {
+//         if (event.data === 'need-more-data') {
+//             console.log("waiting data");
+//             sendNextSegment()
+//         }
+//     };
+// }
 
-    await context.audioWorklet.addModule('worklet-processor.js');
-    audioWorkletNode = new AudioWorkletNode(context, 'audio-processor');
-    audioWorkletNode.connect(gainNode);
-    audioWorkletNode.port.onmessage = (event) => {
-        if (event.data === 'need-more-data') {
-            console.log("waiting data");
-            sendNextSegment()
-        }
-    };
-}
+// function decodeAndQueueAudio(uint8Chunk) {
+//     context.decodeAudioData(uint8Chunk.buffer, buffer => {
+//         const numberOfChannels = buffer.numberOfChannels
+//         let channelData = [];
+//         for (let i = 0; i < numberOfChannels; ++i) {
+//             channelData[i] = buffer.getChannelData(i);
+//         }
+        
+//         audioQueue.push(channelData);
+//         sendNextSegment()        
+//     });
+// }
 
-function decodeAndQueueAudio(uint8Chunk) {
-    context.decodeAudioData(uint8Chunk.buffer, buffer => {
-        const numberOfChannels = buffer.numberOfChannels
-        let channelData = [];
-        for (let i = 0; i < numberOfChannels; ++i) {
-            channelData[i] = buffer.getChannelData(i);
-        }
-        audioQueue.push(channelData);
-        sendNextSegment()        
-    });
-}
-
-function sendNextSegment() {
-    if (audioQueue.length > 0 && audioWorkletNode) {
-        const audioData = audioQueue.shift();
-        audioWorkletNode.port.postMessage(audioData);
-    }
-}
+// function sendNextSegment() {
+//     if (audioQueue.length > 0 && audioWorkletNode) {
+//         audioWorkletNode.port.postMessage(audioQueue.shift());
+//     }
+// }
 
 // function playBuffer() {
 //     if (audioQueue.length > 0) {
@@ -122,14 +121,14 @@ function sendNextSegment() {
 //     }
 // }
 
-function updateElapsedTime() {
-    if (isPlaying && !seeking) {
-        elapsedTime = context.currentTime - startTime;
-        timeText.innerHTML = elapsedTime.toFixed(0);
-        timeRange.value = elapsedTime;
-        requestAnimationFrame(updateElapsedTime);
-    }
-}
+// function updateElapsedTime() {
+//     if (isPlaying && !seeking) {
+//         elapsedTime = context.currentTime - startTime;
+//         timeText.innerHTML = elapsedTime.toFixed(0);
+//         timeRange.value = elapsedTime;
+//         requestAnimationFrame(updateElapsedTime);
+//     }
+// }
 
 
 
@@ -138,56 +137,56 @@ function updateElapsedTime() {
 // const mediaSource = new MediaSource();
 // let play = false
 
-// audioPlayer.src = URL.createObjectURL(mediaSource);
+audioPlayer.src = URL.createObjectURL(mediaSource);
 
-// audioPlayer.addEventListener("play", () => {
-//     play = !play
-// });
+audioPlayer.addEventListener("play", () => {
+    play = !play
+});
 
-// mediaSource.addEventListener('sourceopen', () => {
-//     const sourceBuffer = mediaSource.addSourceBuffer('audio/mpeg');
-//     let audioQueue = [];
+mediaSource.addEventListener('sourceopen', () => {
+    const sourceBuffer = mediaSource.addSourceBuffer('audio/mpeg');
+    let audioQueue = [];
     
-//     sourceBuffer.addEventListener('updateend', () => {
-//         console.log("end update, buffer lenght", sourceBuffer.buffered.length)
-//         if (sourceBuffer.buffered.length > 1) {
-//             const bufferedEnd = sourceBuffer.buffered.end(sourceBuffer.buffered.length - 2);
-//             console.log("bufferend : ",bufferedEnd)
-//             if(bufferedEnd > 10) sourceBuffer.remove(0, bufferedEnd);
-//         }
-//     });
+    sourceBuffer.addEventListener('updateend', () => {
+        console.log("end update, buffer lenght", sourceBuffer.buffered.length)
+        if (sourceBuffer.buffered.length > 1) {
+            const bufferedEnd = sourceBuffer.buffered.end(sourceBuffer.buffered.length - 2);
+            console.log("bufferend : ",bufferedEnd)
+            if(bufferedEnd > 10) sourceBuffer.remove(0, bufferedEnd);
+        }
+    });
     
-//     sourceBuffer.addEventListener('error', (e) => {
-//         console.error('SourceBuffer error:', e);
-//     });
+    sourceBuffer.addEventListener('error', (e) => {
+        console.error('SourceBuffer error:', e);
+    });
     
-//     socket.on('audio', chunk => {
-//         if(!play){
-//             audioQueue = []
-//             return;
-//         } 
-//         const uint8Chunk = new Uint8Array(chunk);
-//         audioQueue.push(uint8Chunk);
-//         if (audioQueue.length > 0) {
-//             if (!sourceBuffer.updating && mediaSource.readyState === 'open') {
-//                 console.log("add buff")
-//                 sourceBuffer.appendBuffer(audioQueue.shift());
-//             }
-//         }                
-//     });
+    socket.on('audio', chunk => {
+        if(!play){
+            audioQueue = []
+            return;
+        } 
+        const uint8Chunk = new Uint8Array(chunk);
+        audioQueue.push(uint8Chunk);
+        if (audioQueue.length > 0) {
+            if (!sourceBuffer.updating && mediaSource.readyState === 'open') {
+                console.log("add buff")
+                sourceBuffer.appendBuffer(audioQueue.shift());
+            }
+        }                
+    });
 
-//     toggleButton.addEventListener('click', () => {
-//         play = !play
-//     });
-// });
+    toggleButton.addEventListener('click', () => {
+        play = !play
+    });
+});
 
-// mediaSource.addEventListener('sourceended', () => {
-//     console.log('MediaSource ended');
-// });
+mediaSource.addEventListener('sourceended', () => {
+    console.log('MediaSource ended');
+});
 
-// mediaSource.addEventListener('sourceclose', () => {
-//     console.log('MediaSource closed');
-// });
+mediaSource.addEventListener('sourceclose', () => {
+    console.log('MediaSource closed');
+});
 
 
 
